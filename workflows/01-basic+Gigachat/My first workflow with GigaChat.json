@@ -1,0 +1,95 @@
+{
+  "name": "My first workflow with GigaChat",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f5712845-257c-4242-a460-b5072879c70b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "125c7144-bc9b-442d-a6fd-767e647fff81",
+              "name": "question",
+              "value": "Где можно искать фриланс заказы для начинающего пользователя разработчика n8n?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "35cf709a-d5de-4dd4-80e0-31eb61ba3ed2",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "prompt": "={{ $json.question }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-gigachat.gigaChat",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3a6d244c-81aa-4bf8-aa6b-7e5af947abe2",
+      "name": "GigaChat",
+      "credentials": {
+        "gigaChatApi": {
+          "id": "E6DKNJnS7aqrNBrM",
+          "name": "GigaChat account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "GigaChat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a11b4de4-6d38-4078-beee-e972447923b2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f1e52557ed0a02668f58154287ecd50f6ed980b6a8725ab25590acdfc0e99518"
+  },
+  "id": "5cgfU3dO9rVoYD73",
+  "tags": []
+}
