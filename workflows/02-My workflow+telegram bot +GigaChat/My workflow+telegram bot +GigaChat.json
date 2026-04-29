@@ -1,0 +1,106 @@
+{
+  "name": "My workflow+telegram bot +GigaChat",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b4bf1478-4335-4edf-ab59-eb28005133bb",
+      "name": "Telegram Trigger",
+      "webhookId": "008cca46-c922-4655-9969-b7896bd98dac",
+      "credentials": {
+        "telegramApi": {
+          "id": "c4TxxAKVloJX3Plv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.response }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        0
+      ],
+      "id": "564c0033-a073-4a59-802c-bf467d562bd9",
+      "name": "Send a text message",
+      "webhookId": "768687f7-2c20-4bb7-8355-03b7b6c0dd39",
+      "credentials": {
+        "telegramApi": {
+          "id": "c4TxxAKVloJX3Plv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "prompt": "={{ $json.message.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-gigachat.gigaChat",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "7f9553d8-12aa-4785-9746-65be81b8cf53",
+      "name": "GigaChat",
+      "credentials": {
+        "gigaChatApi": {
+          "id": "E6DKNJnS7aqrNBrM",
+          "name": "GigaChat account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "GigaChat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GigaChat": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "803a93d4-c3eb-441a-a34d-a85be0aebc02",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f1e52557ed0a02668f58154287ecd50f6ed980b6a8725ab25590acdfc0e99518"
+  },
+  "id": "xUJmmNXBFZlDKKS7",
+  "tags": []
+}
