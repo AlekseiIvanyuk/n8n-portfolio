@@ -1,0 +1,313 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Отзывы",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "ФИО",
+              "placeholder": "заполните ваше ФИО",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Отзыв",
+              "placeholder": "оставьте ваш отзыв"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8a011db0-b9a2-4491-bc8e-7a85c0cb27b8",
+      "name": "On form submission",
+      "webhookId": "1e8824c3-a443-4213-ac98-83b17e99a918"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json['Отзыв'] }}",
+        "options": {
+          "systemPromptTemplate": "Проанализируй отзыв пользователя и определи его тональность. Верни ТОЛЬКО одно слово без пояснений: good, normal или bad. Отзыв: {{ $json['Отзыв'] }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.sentimentAnalysis",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "fc902daa-4328-47d9-a6ce-05c612a899b6",
+      "name": "Sentiment Analysis",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2b138b5e-dbde-48fa-ad4a-e874680fa5a6",
+              "name": "mood",
+              "value": "good",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        -144
+      ],
+      "id": "9fa7cb1c-6e2e-455e-9355-3e618d59e23b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9b93d4cc-0cee-4967-be1a-426df69640a3",
+              "name": "mood",
+              "value": "normal",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "6b33c877-488f-49ef-861a-88021e518caf",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "25a3e796-c7fd-47fc-b469-d62795ff33c6",
+              "name": "mood",
+              "value": "bad",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        160
+      ],
+      "id": "6fa83877-3836-494a-87a9-59d45a56b10d",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f2d1b97f-88be-481a-b76d-7f1647f5f9d0",
+              "name": "Отзыв",
+              "value": "={{ $('On form submission').item.json['ФИО'] }} {{ $('On form submission').item.json['Отзыв'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        0
+      ],
+      "id": "3148bada-410f-40f0-ac82-ec1e127b6a5f",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "reviews.csv"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "5c27c6c6-b8f9-435b-9658-e5a717215fe6",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/node/data/reviews.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "3638478a-d4c2-4cf9-8c4e-a0832139e190",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "model": "GigaChat",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "n8n-nodes-gigachat.lmGigaChat",
+      "typeVersion": 1,
+      "position": [
+        144,
+        208
+      ],
+      "id": "b08b75bb-1ad0-4717-be51-32b166c79732",
+      "name": "GigaChat Model",
+      "credentials": {
+        "gigaChatApi": {
+          "id": "E6DKNJnS7aqrNBrM",
+          "name": "GigaChat account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Sentiment Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sentiment Analysis": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GigaChat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sentiment Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "66bf1823-f28c-49b1-af2f-22473ed99dad",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f1e52557ed0a02668f58154287ecd50f6ed980b6a8725ab25590acdfc0e99518"
+  },
+  "id": "z0OAfPe3jQ2C9k08",
+  "tags": []
+}
