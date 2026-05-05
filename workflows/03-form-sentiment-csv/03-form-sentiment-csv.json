@@ -1,5 +1,5 @@
 {
-  "name": "My workflow 2",
+  "name": "03-form-sentiment-csv",
   "nodes": [
     {
       "parameters": {
@@ -303,7 +303,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "66bf1823-f28c-49b1-af2f-22473ed99dad",
+  "versionId": "d0f02876-383f-41d1-827a-580d9390d012",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "f1e52557ed0a02668f58154287ecd50f6ed980b6a8725ab25590acdfc0e99518"
