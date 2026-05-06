@@ -1,0 +1,220 @@
+{
+  "name": "04- My workflow with LM Studio (local model) HTTP Request",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.0.3:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen2.5-14b-instruct\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json['Задайте вопрос ИИ'] }}\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 100\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "18b19c71-63f3-450e-bf73-ca11296964fd",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "formTitle": "Задай вопрос ИИ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Как к Вам обращаться?"
+            },
+            {
+              "fieldLabel": "Задайте вопрос ИИ"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f6ab36c8-2ec8-4ef2-8198-06c6a1af9bb5",
+      "name": "On form submission",
+      "webhookId": "315deb07-2fd1-46e3-a91c-ae1e21c0dfa3"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Ответ от ИИ",
+              "fieldType": "textarea",
+              "placeholder": "={{ $json.choices[0].message.content }}"
+            },
+            {
+              "fieldLabel": "Хотите задать еще вопрос? Введите - \"да\" или \"нет\""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        0
+      ],
+      "id": "86a78a44-25ac-4e6b-b1f7-b24d1d4bcefd",
+      "name": "Form",
+      "webhookId": "a17139f6-53dc-4c5e-9b62-f96f3de2ce0a"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f66dc9ee-7468-4041-ac68-9cbbc815a3eb",
+              "leftValue": "={{ $json['Хотите задать еще вопрос? Введите - \"да\" или \"нет\"'] }}",
+              "rightValue": "да",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "332e0854-d4a7-4c48-8f4e-99b12f70b0c5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Задайте вопрос ИИ"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        224
+      ],
+      "id": "61aeba11-d7be-417f-80b8-0ad7f64a9172",
+      "name": "Form1",
+      "webhookId": "d808f480-9d06-4682-8cfe-7b6b3884b2a8"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Спасибо за использование нашего приложения - \"Бесплатный диалог с ИИ\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        16
+      ],
+      "id": "be94c8d8-c760-453a-be90-d7737f3d4c71",
+      "name": "Form2",
+      "webhookId": "0268f4f5-a200-420c-95d3-b9a529d48cc5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Form1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Form2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0421ce7c-9ab1-43a6-a46d-b125a9af4d58",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f1e52557ed0a02668f58154287ecd50f6ed980b6a8725ab25590acdfc0e99518"
+  },
+  "id": "7P2h7POm17Ttid3R",
+  "tags": []
+}
