@@ -1,0 +1,527 @@
+{
+  "name": "06-n8n+telegram_bot+LM Studio+qwen copy",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appPbumexJuSSmYAp",
+          "mode": "list",
+          "cachedResultName": "Coffe_shop",
+          "cachedResultUrl": "https://airtable.com/appPbumexJuSSmYAp"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvvlXLQMNm46Sd7",
+          "mode": "list",
+          "cachedResultName": "Мебель",
+          "cachedResultUrl": "https://airtable.com/appPbumexJuSSmYAp/tblvvlXLQMNm46Sd7"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        656,
+        -144
+      ],
+      "id": "261e4a7b-eea5-4f31-bb6b-a7cc7299a95f",
+      "name": "Search records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "GaOwHDv58cCE6R1e",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные после Summarize\nconst data = $input.first().json;\n\n// Получаем запрос пользователя\nconst userMessage = $('Сообщение от пользователя').item.json.message.text || \"Запрос не найден\";\n\n// Логируем, чтобы увидеть, какие поля пришли\nconsole.log('Поля после Summarize:', Object.keys(data));\nconsole.log('Данные:', JSON.stringify(data, null, 2));\n\n// Формируем список товаров\nconst productNames = data['concatenated_Наименование_товара'] || 'Товары не найдены';\nconst productPrices = data['concatenated_Стоимость'] || '';\n\n// Разделяем строки\nconst namesArray = productNames.split(': ').filter(name => name.trim() !== '');\nconst pricesArray = productPrices.split('\\n').filter(price => price.trim() !== '');\n\n// Собираем товары в один список\nlet productList = 'Список товаров и цены:\\n';\nnamesArray.forEach((name, index) => {\n    const price = pricesArray[index] || 'цена не указана';\n    productList += `${name} - ${price}\\n`;\n});\n\n// Формируем ПРАВИЛЬНЫЙ payload для LM Studio\nconst payload = {\n    model: \"qwen-2.5-7b-instruct-k-m\",\n    messages: [\n        {\n            role: \"system\",\n            content: \"Ты - ассистент по ценам. Отвечай вежливо и информативно. Указывай название товара и его стоимость. Если товар не найден, предложи похожие варианты.\"\n        },\n        {\n            role: \"user\",\n            content: `Запрос пользователя: ${userMessage}\\n\\n${productList}\\n\\nНайди стоимость запрашиваемого товара и дай ответ.`\n        }\n    ],\n    temperature: 0.3,\n    max_tokens: 300,\n    stream: false\n};\n\nconsole.log('Отправляемый payload:', JSON.stringify(payload, null, 2));\n\n// ВАЖНО: возвращаем ОДИН объект с полем json\nreturn [{ json: payload }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        -144
+      ],
+      "id": "ce5e99d7-b942-44e3-a982-2a027e821d3b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        64
+      ],
+      "id": "fbb1bf6e-ea63-4de9-a93a-b5a2023938e1",
+      "name": "Сообщение от пользователя",
+      "webhookId": "d5dbf7f8-64a9-4066-bbbc-d4d527957676",
+      "credentials": {
+        "telegramApi": {
+          "id": "c4TxxAKVloJX3Plv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.0.3:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen-2.5-7b-instruct-k-m\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Ты должен прочитать сообщение от пользователя и классифицировать его на три группы - запрос цены, жалоба, поддержка - только эти слова, без заглавных букв. Ответ нужно вернуть одним словом\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.message.text }}\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 100,\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -32,
+        64
+      ],
+      "id": "81d0ee53-3c4e-419d-9676-bd06ebc396bf",
+      "name": "Обращение в LLM"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.choices[0].message.content }}",
+                    "rightValue": "запрос цены",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1500a371-85a0-4c48-949f-ca50fe47b10e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Запрос цены"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "93f12a8b-c783-41f8-8bb1-ac9573397e3e",
+                    "leftValue": "={{ $json.choices[0].message.content }}",
+                    "rightValue": "жалоба",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Жалоба"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "75e239eb-6685-4305-ba25-a49053812f62",
+                    "leftValue": "={{ $json.choices[0].message.content }}",
+                    "rightValue": "поддержка",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Поддержка"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e1563469-b5c6-4932-8463-e13c534d8408",
+                    "leftValue": "={{ $json.choices[0].message.content }}",
+                    "rightValue": "жалоба , поддержка, запрос цены",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notContains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ошибка"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        176,
+        32
+      ],
+      "id": "7936503e-9ce0-4c1c-ab50-4f7fba589ef6",
+      "name": "Разветвление ответа"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Сообщение от пользователя').item.json.message.from.id }}",
+        "text": "=Вы запросили цену, скоро мы вернемся к Вам с ответом!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        -144
+      ],
+      "id": "442c5ea3-93cc-42d2-a27d-3e592cb5b3e9",
+      "name": "Ответ на запрос цены",
+      "webhookId": "cd4ca83d-fe66-4f36-a698-9154735f41cb",
+      "credentials": {
+        "telegramApi": {
+          "id": "c4TxxAKVloJX3Plv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Сообщение от пользователя').item.json.message.from.id }}",
+        "text": "=Мы сожалеем о негативном опыте и постараемся исправить нашу продукцию и учесть ваши пожелания",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        16
+      ],
+      "id": "c8d4669d-707a-4ea9-ba2d-358848ec7d52",
+      "name": "Ответ на жалобу",
+      "webhookId": "cd4ca83d-fe66-4f36-a698-9154735f41cb",
+      "credentials": {
+        "telegramApi": {
+          "id": "c4TxxAKVloJX3Plv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Сообщение от пользователя').item.json.message.from.id }}",
+        "text": "=Ваш запрос на тех поддержку принят, в ближайшее время с Вами свяжутся",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        192
+      ],
+      "id": "90c51183-ca27-4809-b811-4444f527bfc7",
+      "name": "Ответ на вызов тех поддержки",
+      "webhookId": "cd4ca83d-fe66-4f36-a698-9154735f41cb",
+      "credentials": {
+        "telegramApi": {
+          "id": "c4TxxAKVloJX3Plv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.from.id }}",
+        "text": "Возникла программная ошибка, напишите Ваше сообщение еще раз пожалуйста",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        368
+      ],
+      "id": "243fe5e8-7872-4ffd-af83-9d51d04e0f22",
+      "name": "Обработка ошибка парсинга LLM",
+      "webhookId": "21a6f335-65e3-493b-b53c-e7895725081f",
+      "credentials": {
+        "telegramApi": {
+          "id": "c4TxxAKVloJX3Plv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.0.3:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1104,
+        -144
+      ],
+      "id": "163816d7-db6e-4821-99ab-f26ff47dc8a2",
+      "name": "Обращение в LLM1",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Сообщение от пользователя').item.json.message.from.id }}",
+        "text": "={{ $json.choices[0].message.content }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1280,
+        -144
+      ],
+      "id": "deae5628-543f-489c-ae10-bae28ec89d9d",
+      "name": "Ответ на запрос цены1",
+      "webhookId": "cd4ca83d-fe66-4f36-a698-9154735f41cb",
+      "credentials": {
+        "telegramApi": {
+          "id": "c4TxxAKVloJX3Plv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "Наименование товара",
+              "separateBy": "other",
+              "customSeparator": ": "
+            },
+            {
+              "aggregation": "concatenate",
+              "field": "Стоимость",
+              "separateBy": "\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        -144
+      ],
+      "id": "8798abd7-31ba-4bdb-a9ca-c1ad29916328",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "url": "https://ivanyukaleksei.amocrm.ru/api/v4/account",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        656,
+        16
+      ],
+      "id": "baffd7c7-52a5-4b27-bf19-90f4b26847b7",
+      "name": "HTTP Request",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "VQlYkoJn2PA4odcb",
+          "name": "AmoCrm"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Обращение в LLM1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Сообщение от пользователя": {
+      "main": [
+        [
+          {
+            "node": "Обращение в LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Обращение в LLM": {
+      "main": [
+        [
+          {
+            "node": "Разветвление ответа",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Разветвление ответа": {
+      "main": [
+        [
+          {
+            "node": "Ответ на запрос цены",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ответ на жалобу",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ответ на вызов тех поддержки",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Обработка ошибка парсинга LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ответ на запрос цены": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Обращение в LLM1": {
+      "main": [
+        [
+          {
+            "node": "Ответ на запрос цены1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ответ на жалобу": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f0fa093a-4dc4-4fe3-9d1a-a4cb7de2bb84",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f1e52557ed0a02668f58154287ecd50f6ed980b6a8725ab25590acdfc0e99518"
+  },
+  "id": "c9jGvar0yNPbP3lz",
+  "tags": []
+}

@@ -19,7 +19,7 @@ docker run -d \
   -p 5678:5678 \
   -v ~/.n8n:/home/node/.n8n \
   -v ~/n8n_data:/home/node/data \
-  -e WEBHOOK_URL=https://Ваш адрес выданный ngrok \
+  -e WEBHOOK_URL=https://pectin-nicotine-penalize.ngrok-free.dev \
   n8nio/n8n:1.121.1
 После запуска проверяем что адрес соответствует.
 
